@@ -1,0 +1,35 @@
+[
+  {
+    "id": "c33a21e2-aa7f-4187-9e38-101b151889fd",
+    "path": "/my-endpoint",
+    "method": "PATCH",
+    "status": 200,
+    "responseBody": "{\n  \"message\": \"Hello World\"\n}",
+    "createdAt": 1763655351893
+  },
+  {
+    "id": "cf6ce02e-0fbb-4e38-913e-ceccec623de8",
+    "path": "/test-mock",
+    "method": "GET",
+    "status": 200,
+    "responseBody": "{\"message\": \"success\"}",
+    "createdAt": 1763655366011
+  },
+  {
+    "id": "ff4dacb5-2114-4fb6-8a95-3f8aeb24e2af",
+    "path": "/test",
+    "method": "GET",
+    "status": 200,
+    "responseBody": "{\"message\": \"hello\"}",
+    "createdAt": 1763657212157
+  },
+  {
+    "id": "a5f6d62f-d970-40cd-8fcf-38d180a0b83a",
+    "path": "/test-hits-1",
+    "method": "GET",
+    "status": 200,
+    "responseBody": "{\"msg\": \"hit me\"}",
+    "createdAt": 1763657824506,
+    "hitCount": 1
+  }
+]
