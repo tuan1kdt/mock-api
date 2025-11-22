@@ -42,18 +42,12 @@ func main() {
 	// Initialize service
 	service := usecase.NewMockService(mockRepo)
 
-	// Initialize handler
-	handler := mockhttp.NewMockHandler(service)
+	// Initialize handler with config
+	handler := mockhttp.NewMockHandler(service, cfg.Scheme, cfg.ManagementDomain)
 
 	// Create routers
 	managementRouter := mockhttp.NewManagementRouter(handler)
 	servingRouter := mockhttp.NewServingRouter(handler)
-
-	// Get management domain from environment
-	managementDomain := os.Getenv("MANAGEMENT_DOMAIN")
-	if managementDomain == "" {
-		panic("MANAGEMENT_DOMAIN is not set")
-	}
 
 	// Create main handler that dispatches based on Host header
 	mainHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -63,7 +57,7 @@ func main() {
 			duration := time.Since(start)
 			log.Printf("INFO: host=%s method=%s path=%s duration=%s", r.Host, r.Method, r.URL.Path, duration)
 		}()
-		if r.Host == managementDomain {
+		if r.Host == cfg.ManagementDomain {
 			managementRouter.ServeHTTP(w, r)
 			return
 		}
@@ -85,7 +79,7 @@ func main() {
 	// Start server in a goroutine
 	go func() {
 		fmt.Printf("Starting server on port %s\n", cfg.Port)
-		fmt.Printf("Management domain: %s\n", managementDomain)
+		fmt.Printf("Management domain: %s\n", cfg.ManagementDomain)
 		fmt.Printf("Serving domain: any other domain\n")
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Failed to start server: %v", err)

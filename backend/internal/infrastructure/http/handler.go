@@ -2,6 +2,7 @@ package http
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -9,11 +10,17 @@ import (
 )
 
 type MockHandler struct {
-	service *usecase.MockService
+	service          *usecase.MockService
+	scheme           string
+	managementDomain string
 }
 
-func NewMockHandler(service *usecase.MockService) *MockHandler {
-	return &MockHandler{service: service}
+func NewMockHandler(service *usecase.MockService, scheme, managementDomain string) *MockHandler {
+	return &MockHandler{
+		service:          service,
+		scheme:           scheme,
+		managementDomain: managementDomain,
+	}
 }
 
 func (h *MockHandler) CreateMock(w http.ResponseWriter, r *http.Request) {
@@ -131,8 +138,41 @@ func (h *MockHandler) ListMocks(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Create response with curl commands
+	type MockResponse struct {
+		ID           string `json:"id"`
+		UserID       string `json:"user_id"`
+		Path         string `json:"path"`
+		Method       string `json:"method"`
+		Status       int    `json:"status"`
+		ResponseBody string `json:"response_body"`
+		CreatedAt    string `json:"created_at"`
+		ExpiresAt    string `json:"expires_at"`
+		HitCount     int    `json:"hit_count"`
+		CurlCommand  string `json:"curl_command"`
+	}
+
+	responses := make([]MockResponse, len(mocks))
+	for i, mock := range mocks {
+		url := fmt.Sprintf("%s://%s.%s%s", h.scheme, userID, h.managementDomain, mock.Path)
+		curlCommand := fmt.Sprintf(`curl -X %s "%s"`, mock.Method, url)
+
+		responses[i] = MockResponse{
+			ID:           mock.ID,
+			UserID:       mock.UserID,
+			Path:         mock.Path,
+			Method:       mock.Method,
+			Status:       mock.Status,
+			ResponseBody: mock.ResponseBody,
+			CreatedAt:    mock.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+			ExpiresAt:    mock.ExpiresAt.Format("2006-01-02T15:04:05Z07:00"),
+			HitCount:     mock.HitCount,
+			CurlCommand:  curlCommand,
+		}
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(mocks)
+	json.NewEncoder(w).Encode(responses)
 }
 
 func (h *MockHandler) DeleteMock(w http.ResponseWriter, r *http.Request) {

@@ -10,6 +10,11 @@ build/
 *.so
 *.dylib
 
+# Next.js build outputs
+.next/
+.vercel/
+out/
+
 # IDE
 .vscode/
 .idea/
@@ -29,6 +34,7 @@ logs/
 .env
 .env.local
 .env.*.local
+.dev.vars
 
 # Go specific
 *.test

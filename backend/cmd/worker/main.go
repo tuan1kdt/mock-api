@@ -28,17 +28,23 @@ func main() {
 	// Initialize service
 	service := usecase.NewMockService(mockRepo)
 
-	// Initialize handler
-	handler := mockhttp.NewMockHandler(service)
-
-	// Create routers
-	managementRouter := mockhttp.NewManagementRouter(handler)
-	servingRouter := mockhttp.NewServingRouter(handler)
+	// Get configuration from environment
+	scheme := cloudflare.Getenv("SCHEME")
+	if scheme == "<undefined>" {
+		scheme = "https"
+	}
 
 	managementDomain := cloudflare.Getenv("MANAGEMENT_DOMAIN")
 	if managementDomain == "" {
 		panic("MANAGEMENT_DOMAIN is not set")
 	}
+
+	// Initialize handler with config
+	handler := mockhttp.NewMockHandler(service, scheme, managementDomain)
+
+	// Create routers
+	managementRouter := mockhttp.NewManagementRouter(handler)
+	servingRouter := mockhttp.NewServingRouter(handler)
 
 	// Create main handler that dispatches based on Host header
 	mainHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

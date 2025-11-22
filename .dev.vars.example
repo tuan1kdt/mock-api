@@ -1,0 +1,7 @@
+# Local development environment variables
+# Copy this file to .dev.vars and update with your local values
+# .dev.vars is gitignored and will override wrangler.toml [vars] for local dev
+
+MANAGEMENT_DOMAIN=localhost:8787
+SCHEME=http
+

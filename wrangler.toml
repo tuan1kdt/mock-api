@@ -1,6 +1,6 @@
 name = "mock-api-backend"
 main = "backend/build/worker.mjs"
-compatibility_date = "2024-11-22"
+compatibility_date = "2025-11-22"
 
 # Explicitly set format to service-worker to avoid bundling issues
 # format = "service-worker" 
@@ -18,8 +18,11 @@ globs = ["**/*.wasm"]
 fallthrough = false
 
 [vars]
-# Default variables, override in Cloudflare Dashboard
-MANAGEMENT_DOMAIN = "localhost:8787"
+# Production environment variables
+# For local development, use .dev.vars file (gitignored)
+# These are production defaults - override in Cloudflare Dashboard if needed
+# MANAGEMENT_DOMAIN = "your-production-domain.com"
+# SCHEME = "https"
 
 [[d1_databases]]
 binding = "DB"

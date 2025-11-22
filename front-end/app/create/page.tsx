@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Copy, RefreshCw, Clock, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { CreateApiModal } from "@/app/components/CreateApiModal";
 
@@ -17,6 +18,7 @@ type MockEndpoint = {
     created_at: string; // RFC3339 string
     expires_at: string; // RFC3339 string
     hit_count?: number;
+    curl_command?: string;
 };
 
 function CountdownTimer({ targetDate }: { targetDate: string }) {
@@ -58,6 +60,7 @@ export default function CreatePage() {
     const [isLoadingMocks, setIsLoadingMocks] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingMock, setEditingMock] = useState<MockEndpoint | undefined>(undefined);
+    const [showToast, setShowToast] = useState(false);
 
     const fetchMocks = async () => {
         setIsLoadingMocks(true);
@@ -96,13 +99,19 @@ export default function CreatePage() {
         fetchMocks();
     };
 
-    const copyCurl = (mock: MockEndpoint) => {
-        const servingPort = "8000";
-        const host = `${mock.user_id}.localhost:${servingPort}`;
-        const url = `http://${host}${mock.path}`;
-
-        const curlCommand = `curl -X ${mock.method} "${url}"`;
-        navigator.clipboard.writeText(curlCommand);
+    const copyCurl = async (mock: MockEndpoint) => {
+        if (!mock.curl_command) {
+            console.error("curl_command not available");
+            return;
+        }
+        
+        try {
+            await navigator.clipboard.writeText(mock.curl_command);
+            setShowToast(true);
+            setTimeout(() => setShowToast(false), 2000);
+        } catch (error) {
+            console.error("Failed to copy to clipboard", error);
+        }
     };
 
     const handleDelete = async (mock: MockEndpoint) => {
@@ -273,6 +282,26 @@ export default function CreatePage() {
                 onSuccess={handleModalSuccess}
                 editingMock={editingMock}
             />
+
+            {/* Toast Notification */}
+            <AnimatePresence>
+                {showToast && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 20 }}
+                        transition={{ duration: 0.2 }}
+                        className="fixed bottom-6 right-6 z-50"
+                    >
+                        <div className="rounded-lg bg-primary text-primary-foreground px-4 py-3 shadow-lg border border-white/10">
+                            <div className="flex items-center gap-2">
+                                <Copy className="h-4 w-4" />
+                                <span className="font-medium">curl Copied!</span>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

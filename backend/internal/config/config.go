@@ -11,14 +11,26 @@ type DatabaseConfig struct {
 }
 
 type Config struct {
-	Port     string
-	Database DatabaseConfig
+	Port             string
+	Scheme           string
+	ManagementDomain string
+	Database         DatabaseConfig
 }
 
 func NewConfig() *Config {
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
+	}
+
+	scheme := os.Getenv("SCHEME")
+	if scheme == "" {
+		scheme = "https"
+	}
+
+	managementDomain := os.Getenv("MANAGEMENT_DOMAIN")
+	if managementDomain == "" {
+		managementDomain = "localhost:8787"
 	}
 
 	dbHost := os.Getenv("DB_HOST")
@@ -40,7 +52,9 @@ func NewConfig() *Config {
 	}
 
 	return &Config{
-		Port: port,
+		Port:             port,
+		Scheme:           scheme,
+		ManagementDomain: managementDomain,
 		Database: DatabaseConfig{
 			Host:     dbHost,
 			Port:     dbPort,
