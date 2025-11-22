@@ -38,11 +38,57 @@ func (h *MockHandler) CreateMock(c *gin.Context) {
 
 	mock, err := h.service.CreateMock(userID, req.Path, req.Method, req.ResponseBody, req.Status)
 	if err != nil {
+		if err.Error() == "mock endpoint already exists" {
+			c.JSON(http.StatusConflict, gin.H{"error": "Endpoint already exists"})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	c.JSON(http.StatusCreated, mock)
+}
+
+func (h *MockHandler) UpdateMock(c *gin.Context) {
+	userID := c.GetString("userID")
+	if userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	id := c.Param("id")
+	if id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID is required"})
+		return
+	}
+
+	var req struct {
+		Path         string `json:"path" binding:"required"`
+		Method       string `json:"method" binding:"required"`
+		Status       int    `json:"status" binding:"required"`
+		ResponseBody string `json:"response_body" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	mock, err := h.service.UpdateMock(userID, id, req.Path, req.Method, req.ResponseBody, req.Status)
+	if err != nil {
+		if err.Error() == "mock endpoint already exists" {
+			c.JSON(http.StatusConflict, gin.H{"error": "Endpoint already exists"})
+			return
+		}
+		if err.Error() == "mock endpoint not found" {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Mock not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, mock)
 }
 
 func (h *MockHandler) ListMocks(c *gin.Context) {

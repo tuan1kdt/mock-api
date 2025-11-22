@@ -13,6 +13,7 @@ func NewManagementRouter(handler *MockHandler) *gin.Engine {
 	{
 		api.POST("/mocks", handler.CreateMock)
 		api.GET("/mocks", handler.ListMocks)
+		api.PUT("/mocks/:id", handler.UpdateMock)
 	}
 
 	return r

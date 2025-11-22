@@ -4,9 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"errors"
+
 	"mock-api-backend/internal/domain"
 	pgrepo "mock-api-backend/internal/infrastructure/repository/postgres"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -41,6 +44,23 @@ func (r *PostgresMockRepository) Save(mock *domain.MockAPI) error {
 	return err
 }
 
+func (r *PostgresMockRepository) Update(mock *domain.MockAPI) error {
+	var uuid pgtype.UUID
+	if err := uuid.Scan(mock.ID); err != nil {
+		return fmt.Errorf("invalid UUID: %w", err)
+	}
+
+	_, err := r.queries.UpdateMock(context.Background(), pgrepo.UpdateMockParams{
+		ID:             uuid,
+		UserID:         mock.UserID,
+		Method:         mock.Method,
+		Path:           mock.Path,
+		ResponseStatus: int32(mock.Status),
+		ResponseBody:   mock.ResponseBody,
+	})
+	return err
+}
+
 func (r *PostgresMockRepository) GetByUser(userID string) ([]*domain.MockAPI, error) {
 	mocks, err := r.queries.ListMocksByUser(context.Background(), userID)
 	if err != nil {
@@ -61,6 +81,9 @@ func (r *PostgresMockRepository) GetByPathAndMethod(userID, path, method string)
 		Method: method,
 	})
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return toDomainMock(mock), nil

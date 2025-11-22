@@ -60,6 +60,7 @@ export default function CreatePage() {
     const [success, setSuccess] = useState("");
     const [mocks, setMocks] = useState<MockEndpoint[]>([]);
     const [isLoadingMocks, setIsLoadingMocks] = useState(true);
+    const [editingId, setEditingId] = useState<string | null>(null);
 
     const [formData, setFormData] = useState({
         path: "/my-endpoint",
@@ -105,8 +106,11 @@ export default function CreatePage() {
                 throw new Error("Invalid JSON in response body");
             }
 
-            const res = await fetch("/api/mocks", {
-                method: "POST",
+            const url = editingId ? `/api/mocks/${editingId}` : "/api/mocks";
+            const method = editingId ? "PUT" : "POST";
+
+            const res = await fetch(url, {
+                method: method,
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(formData),
             });
@@ -114,16 +118,54 @@ export default function CreatePage() {
             const data = await res.json();
 
             if (!res.ok) {
-                throw new Error(data.error || "Failed to create mock");
+                if (res.status === 409) {
+                    throw new Error("Endpoint already exists for this method and path.");
+                }
+                throw new Error(data.error || "Failed to save mock");
             }
 
-            setSuccess("Mock API created successfully!");
+            setSuccess(editingId ? "Mock API updated successfully!" : "Mock API created successfully!");
             fetchMocks(); // Refresh list
+
+            if (!editingId) {
+                // Reset form only on create, keep it for edit or maybe reset? 
+                // Usually on edit success we might want to stay or clear. 
+                // Let's clear editing state to allow creating new one.
+            }
+            setEditingId(null);
+            // Optional: Reset form to default if desired, or keep last values
+            // setFormData({ ... }); 
         } catch (err: any) {
             setError(err.message);
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const handleEdit = (mock: MockEndpoint) => {
+        setFormData({
+            path: mock.path,
+            method: mock.method,
+            status: mock.status,
+            response_body: mock.response_body,
+        });
+        setEditingId(mock.id);
+        setSuccess("");
+        setError("");
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handleCancelEdit = () => {
+        setEditingId(null);
+        setFormData({
+            path: "/my-endpoint",
+            method: "GET",
+            status: 200,
+            response_body: JSON.stringify({ message: "Hello World" }, null, 2),
+        });
+        setError("");
+        setSuccess("");
     };
 
     const copyCurl = (mock: MockEndpoint) => {
@@ -160,8 +202,8 @@ export default function CreatePage() {
                     <div className="space-y-6">
                         <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
                             <div className="p-6 space-y-1">
-                                <h2 className="text-lg font-semibold">Create New Mock</h2>
-                                <p className="text-sm text-muted-foreground">Define your endpoint response</p>
+                                <h2 className="text-lg font-semibold">{editingId ? "Edit Mock" : "Create New Mock"}</h2>
+                                <p className="text-sm text-muted-foreground">{editingId ? "Update your endpoint response" : "Define your endpoint response"}</p>
                             </div>
                             <div className="p-6 pt-0">
                                 <form onSubmit={handleSubmit} className="space-y-6">
@@ -175,10 +217,17 @@ export default function CreatePage() {
                                                         type="button"
                                                         onClick={() => setFormData({ ...formData, method: m })}
                                                         className={cn(
-                                                            "inline-flex items-center justify-center rounded-md border px-3 py-2 text-xs font-medium transition-all hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                                                            "inline-flex items-center justify-center rounded-md border px-3 py-2 text-xs font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                                                             formData.method === m
-                                                                ? "border-primary bg-primary text-primary-foreground hover:bg-primary/90"
-                                                                : "border-input bg-transparent shadow-sm"
+                                                                ? cn(
+                                                                    "shadow-sm border-transparent",
+                                                                    m === "GET" && "bg-blue-500 text-white hover:bg-blue-600",
+                                                                    m === "POST" && "bg-green-500 text-white hover:bg-green-600",
+                                                                    m === "PUT" && "bg-orange-500 text-white hover:bg-orange-600",
+                                                                    m === "DELETE" && "bg-red-500 text-white hover:bg-red-600",
+                                                                    m === "PATCH" && "bg-yellow-500 text-black hover:bg-yellow-600"
+                                                                )
+                                                                : "border-input bg-transparent shadow-sm hover:bg-accent hover:text-accent-foreground"
                                                         )}
                                                     >
                                                         {m}
@@ -237,23 +286,34 @@ export default function CreatePage() {
                                         </div>
                                     )}
 
-                                    <button
-                                        type="submit"
-                                        disabled={isLoading}
-                                        className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-8 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 w-full"
-                                    >
-                                        {isLoading ? (
-                                            <>
-                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                Creating...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Save className="mr-2 h-4 w-4" />
-                                                Create Mock API
-                                            </>
+                                    <div className="flex gap-2">
+                                        <button
+                                            type="submit"
+                                            disabled={isLoading}
+                                            className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-8 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 flex-1"
+                                        >
+                                            {isLoading ? (
+                                                <>
+                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                    {editingId ? "Updating..." : "Creating..."}
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Save className="mr-2 h-4 w-4" />
+                                                    {editingId ? "Update Mock API" : "Create Mock API"}
+                                                </>
+                                            )}
+                                        </button>
+                                        {editingId && (
+                                            <button
+                                                type="button"
+                                                onClick={handleCancelEdit}
+                                                className="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+                                            >
+                                                Cancel
+                                            </button>
                                         )}
-                                    </button>
+                                    </div>
                                 </form>
                             </div>
                         </div>
@@ -315,6 +375,13 @@ export default function CreatePage() {
                                                     title="Copy cURL"
                                                 >
                                                     <Copy className="h-4 w-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleEdit(mock)}
+                                                    className="inline-flex items-center justify-center rounded-md h-8 w-8 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                                                    title="Edit"
+                                                >
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-pencil"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
                                                 </button>
                                             </div>
                                         </div>

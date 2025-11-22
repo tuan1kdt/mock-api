@@ -30,3 +30,9 @@ WHERE expires_at < NOW();
 -- name: DeleteMock :exec
 DELETE FROM mocks
 WHERE id = $1;
+
+-- name: UpdateMock :one
+UPDATE mocks
+SET method = $3, path = $4, response_status = $5, response_body = $6
+WHERE id = $1 AND user_id = $2
+RETURNING *;

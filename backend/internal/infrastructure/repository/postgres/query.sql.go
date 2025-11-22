@@ -170,3 +170,43 @@ func (q *Queries) ListMocksByUser(ctx context.Context, userID string) ([]Mock, e
 	}
 	return items, nil
 }
+
+const updateMock = `-- name: UpdateMock :one
+UPDATE mocks
+SET method = $3, path = $4, response_status = $5, response_body = $6
+WHERE id = $1 AND user_id = $2
+RETURNING id, user_id, method, path, response_status, response_body, hit_count, created_at, expires_at
+`
+
+type UpdateMockParams struct {
+	ID             pgtype.UUID
+	UserID         string
+	Method         string
+	Path           string
+	ResponseStatus int32
+	ResponseBody   string
+}
+
+func (q *Queries) UpdateMock(ctx context.Context, arg UpdateMockParams) (Mock, error) {
+	row := q.db.QueryRow(ctx, updateMock,
+		arg.ID,
+		arg.UserID,
+		arg.Method,
+		arg.Path,
+		arg.ResponseStatus,
+		arg.ResponseBody,
+	)
+	var i Mock
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Method,
+		&i.Path,
+		&i.ResponseStatus,
+		&i.ResponseBody,
+		&i.HitCount,
+		&i.CreatedAt,
+		&i.ExpiresAt,
+	)
+	return i, err
+}
