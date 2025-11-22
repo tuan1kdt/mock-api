@@ -39,3 +39,6 @@ server
 *.tmp
 *.temp
 
+**/.wrangler
+
+!backend/cmd/server/

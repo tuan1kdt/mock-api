@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 
-const SERVING_URL = process.env.SERVING_URL || 'http://localhost:8000';
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8000';
+
+export const runtime = 'edge';
 
 async function handleRequest(request: Request, { params }: { params: Promise<{ mockPath: string[] }> }) {
     const { mockPath } = await params;
@@ -31,23 +33,12 @@ async function handleRequest(request: Request, { params }: { params: Promise<{ m
         });
 
         // Construct the target URL
-        // We try to use the actual domain with subdomain to let fetch handle the Host header
-        const servingUrlObj = new URL(SERVING_URL);
-        if (userId) {
-            servingUrlObj.hostname = `${userId}.${servingUrlObj.hostname}`;
-        }
-
-        const targetUrl = new URL(pathStr, servingUrlObj.toString());
-
-        // Remove Host header if we set it manually before, just in case
-        if (headers['Host']) {
-            delete headers['Host'];
-        }
+        // We simply forward to the backend URL
 
         // Forward the body if method is not GET/HEAD
         const body = (method === 'GET' || method === 'HEAD') ? undefined : await request.text();
 
-        const res = await fetch(targetUrl.toString(), {
+        const res = await fetch(`${BACKEND_URL}${pathStr}`, {
             method,
             headers,
             body,

@@ -1,12 +1,11 @@
 package http
 
 import (
+	"encoding/json"
 	"net/http"
 	"strings"
 
 	"mock-api-backend/internal/usecase"
-
-	"github.com/gin-gonic/gin"
 )
 
 type MockHandler struct {
@@ -17,168 +16,179 @@ func NewMockHandler(service *usecase.MockService) *MockHandler {
 	return &MockHandler{service: service}
 }
 
-func (h *MockHandler) CreateMock(c *gin.Context) {
-	userID := c.GetString("userID")
+func (h *MockHandler) CreateMock(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	userID := getUserID(r)
 	if userID == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
 	var req struct {
-		Path         string `json:"path" binding:"required"`
-		Method       string `json:"method" binding:"required"`
-		Status       int    `json:"status" binding:"required"`
-		ResponseBody string `json:"response_body" binding:"required"`
+		Path         string `json:"path"`
+		Method       string `json:"method"`
+		Status       int    `json:"status"`
+		ResponseBody string `json:"response_body"`
 	}
 
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if req.Path == "" || req.Method == "" || req.Status == 0 || req.ResponseBody == "" {
+		http.Error(w, "Missing required fields", http.StatusBadRequest)
 		return
 	}
 
 	mock, err := h.service.CreateMock(userID, req.Path, req.Method, req.ResponseBody, req.Status)
 	if err != nil {
 		if err.Error() == "mock endpoint already exists" {
-			c.JSON(http.StatusConflict, gin.H{"error": "Endpoint already exists"})
+			http.Error(w, "Endpoint already exists", http.StatusConflict)
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	c.JSON(http.StatusCreated, mock)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(mock)
 }
 
-func (h *MockHandler) UpdateMock(c *gin.Context) {
-	userID := c.GetString("userID")
-	if userID == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+func (h *MockHandler) UpdateMock(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPut {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	id := c.Param("id")
+	userID := getUserID(r)
+	if userID == "" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	id := strings.TrimPrefix(r.URL.Path, "/api/mocks/")
 	if id == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "ID is required"})
+		http.Error(w, "ID is required", http.StatusBadRequest)
 		return
 	}
 
 	var req struct {
-		Path         string `json:"path" binding:"required"`
-		Method       string `json:"method" binding:"required"`
-		Status       int    `json:"status" binding:"required"`
-		ResponseBody string `json:"response_body" binding:"required"`
+		Path         string `json:"path"`
+		Method       string `json:"method"`
+		Status       int    `json:"status"`
+		ResponseBody string `json:"response_body"`
 	}
 
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if req.Path == "" || req.Method == "" || req.Status == 0 || req.ResponseBody == "" {
+		http.Error(w, "Missing required fields", http.StatusBadRequest)
 		return
 	}
 
 	mock, err := h.service.UpdateMock(userID, id, req.Path, req.Method, req.ResponseBody, req.Status)
 	if err != nil {
 		if err.Error() == "mock endpoint already exists" {
-			c.JSON(http.StatusConflict, gin.H{"error": "Endpoint already exists"})
+			http.Error(w, "Endpoint already exists", http.StatusConflict)
 			return
 		}
 		if err.Error() == "mock endpoint not found" {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Mock not found"})
+			http.Error(w, "Mock not found", http.StatusNotFound)
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	c.JSON(http.StatusOK, mock)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(mock)
 }
 
-func (h *MockHandler) ListMocks(c *gin.Context) {
-	userID := c.GetString("userID")
+func (h *MockHandler) ListMocks(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	userID := getUserID(r)
 	if userID == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
 	mocks, err := h.service.GetMocks(userID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	c.JSON(http.StatusOK, mocks)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(mocks)
 }
 
-func (h *MockHandler) DeleteMock(c *gin.Context) {
-	userID := c.GetString("userID")
-	if userID == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+func (h *MockHandler) DeleteMock(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodDelete {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	id := c.Param("id")
+	userID := getUserID(r)
+	if userID == "" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	id := strings.TrimPrefix(r.URL.Path, "/api/mocks/")
 	if id == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "ID is required"})
+		http.Error(w, "ID is required", http.StatusBadRequest)
 		return
 	}
 
 	err := h.service.DeleteMock(userID, id)
 	if err != nil {
 		if err.Error() == "mock endpoint not found" {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Mock not found"})
+			http.Error(w, "Mock not found", http.StatusNotFound)
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Mock deleted successfully"})
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"message": "Mock deleted successfully"})
 }
 
-func (h *MockHandler) ServeMock(c *gin.Context) {
-	userID := c.GetString("userID") // In real scenario, this might be different logic for public access
-	// For now, let's assume the creator is testing it, or we need a way to identify the 'owner' of the mock path
-	// Since the requirement says "each user will manage there own mock API", serving it might require identifying the user context.
-	// However, usually mocks are public.
-	// If anonymous users create mocks, how do others access them?
-	// Maybe the path should include the user ID or a unique slug?
-	// Or we assume the user testing it is the same user (cookie based).
-	// Let's stick to the cookie based for now as per "User need login if want create API persistent. But only implement anonoymous create api for now".
+func (h *MockHandler) ServeMock(w http.ResponseWriter, r *http.Request) {
+	userID := getUserIDFromSubdomain(r)
 
-	// If we want to allow public access, we might need to change the path strategy.
-	// But for "fast test" with curl, the curl command won't have the cookie.
-	// This is a gap in the "anonymous user" requirement vs "curl test".
-	// If I use curl, I don't have the cookie, so I am a different "anonymous user".
-	// So I can't see the mock created by the browser user.
-
-	// To solve this for MVP:
-	// 1. The path could be global (collision risk).
-	// 2. The path includes a unique token.
-	// 3. We just implement the management part for now as requested "backend will writen in Golang... Will test at next phase".
-
-	// Let's implement the ServeMock logic assuming the user context is present or we look up by path globally (if we change repo).
-	// Given the repo `GetByPathAndMethod` takes `userID`, it implies mocks are scoped to users.
-	// Let's assume for now we only test via browser where cookie is present.
-
-	path := c.Param("path")
-	method := c.Request.Method
-
-	// We need to handle the wildcard param from Gin correctly
-	// If route is /api/:path, path will be the segment.
-	// If we use *path, it captures everything.
+	path := r.URL.Path
 	if !strings.HasPrefix(path, "/") {
 		path = "/" + path
 	}
 
+	method := r.Method
+
 	mock, err := h.service.GetMockForServing(userID, path, method)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	if mock == nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Mock not found"})
+		http.Error(w, "Mock not found", http.StatusNotFound)
 		return
 	}
 
-	c.Header("Content-Type", "application/json")
-	c.String(mock.Status, mock.ResponseBody)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(mock.Status)
+	w.Write([]byte(mock.ResponseBody))
 }

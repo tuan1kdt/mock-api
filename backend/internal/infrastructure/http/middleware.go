@@ -1,70 +1,73 @@
 package http
 
 import (
+	"context"
+	"crypto/rand"
+	"encoding/hex"
+	"net/http"
 	"strings"
-
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 const UserIDCookie = "user_id"
+const userIDKey = "userID"
 
-func AuthMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		userID, err := c.Cookie(UserIDCookie)
-		if err != nil || userID == "" {
-			userID = uuid.New().String()
-			// Set cookie for 1 year (or session)
-			// For anonymous, maybe shorter? But requirement says API lives 10 mins. User identity can live longer.
-			c.SetCookie(UserIDCookie, userID, 3600*24, "/", "", false, true)
+func getUserID(r *http.Request) string {
+	// Try to get from context first (set by middleware)
+	if userID := r.Context().Value(userIDKey); userID != nil {
+		if id, ok := userID.(string); ok {
+			return id
 		}
-		c.Set(UserIDCookie, userID) // Store in context for handlers
-		c.Set("userID", userID)     // easier key
-		c.Next()
 	}
+
+	// Try to get from cookie
+	cookie, err := r.Cookie(UserIDCookie)
+	if err == nil && cookie.Value != "" {
+		return cookie.Value
+	}
+
+	// Generate new user ID (cookie will be set by middleware)
+	return generateID()
 }
 
-func SubdomainAuthMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		host := c.Request.Host
-		// Host is likely "subdomain.localhost:8000" or "subdomain.domain.com"
-		// We need to extract the first part.
-		// Simple split by "."
-		// Note: This is a naive implementation. For production, use a robust domain parser.
-		// Also handle "localhost:8000" (no subdomain) -> maybe public or error?
-
-		var userID string
-		// Check if it's localhost (dev)
-		// If host is "user1.localhost:8000", we want "user1".
-		// If host is "localhost:8000", we have no user.
-
-		// Split by port first if present
-		// net.SplitHostPort might be safer but let's do simple string manip for now or assume standard format.
-
-		// Let's try to find the first dot.
-		// If no dot, or dot is after the last colon (port), then no subdomain?
-		// Actually, "localhost" has no dot.
-
-		// Let's assume the format is always `userID.domain:port` or `userID.domain`.
-
-		// For this specific requirement: "user1.localhost:8000"
-
-		hostParts := strings.Split(host, ".")
-		if len(hostParts) > 1 {
-			userID = hostParts[0]
-		}
-
-		if userID == "" || userID == "localhost" {
-			// Fallback or error?
-			// Requirement: "each user will have the own random token... user1.localhost:8000"
-			// If accessed via localhost:8000 directly, maybe return 404 or 400.
-			// But let's allow it to proceed with empty userID, handler will decide.
-		}
-
+func getUserIDFromSubdomain(r *http.Request) string {
+	host := r.Host
+	hostParts := strings.Split(host, ".")
+	if len(hostParts) > 1 {
+		userID := hostParts[0]
 		if userID != "" && userID != "localhost" {
-			c.Set("userID", userID)
+			return userID
 		}
-
-		c.Next()
 	}
+	return getUserID(r)
+}
+
+func authMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Try to get from cookie first
+		cookie, err := r.Cookie(UserIDCookie)
+		var userID string
+		if err == nil && cookie.Value != "" {
+			userID = cookie.Value
+		} else {
+			// Generate new user ID
+			userID = generateID()
+			// Set cookie
+			http.SetCookie(w, &http.Cookie{
+				Name:     UserIDCookie,
+				Value:    userID,
+				Path:     "/",
+				MaxAge:   0,
+				HttpOnly: true,
+				SameSite: http.SameSiteLaxMode,
+			})
+		}
+		ctx := context.WithValue(r.Context(), userIDKey, userID)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func generateID() string {
+	b := make([]byte, 16)
+	rand.Read(b)
+	return hex.EncodeToString(b)
 }

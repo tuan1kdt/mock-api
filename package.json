@@ -1,0 +1,16 @@
+{
+    "name": "mock-api-backend",
+    "version": "0.0.0",
+    "private": true,
+    "scripts": {
+        "build": "cd backend && go run github.com/syumai/workers/cmd/workers-assets-gen -mode=go && GOOS=js GOARCH=wasm go build -ldflags='-s -w' -trimpath -o ./build/app.wasm ./cmd/worker",
+        "deploy": "wrangler deploy",
+        "dev": "wrangler dev",
+        "start": "wrangler dev",
+        "migrate:local": "wrangler d1 execute mock_api --local --file=backend/sql/d1_schema.sql",
+        "migrate:remote": "wrangler d1 execute mock_api --remote --file=backend/sql/d1_schema.sql"
+    },
+    "devDependencies": {
+        "wrangler": "^3.109.2"
+    }
+}

@@ -1,0 +1,27 @@
+name = "mock-api-backend"
+main = "backend/build/worker.mjs"
+compatibility_date = "2024-11-22"
+
+# Explicitly set format to service-worker to avoid bundling issues
+# format = "service-worker" 
+# Wait, 'format' key is deprecated or moved? 
+# In newer wrangler, it might be inferred. 
+# Let's try to just use the file.
+
+[build]
+command = "npm run build"
+watch_dir = ["backend/cmd", "backend/internal"]
+
+[[rules]]
+type = "CompiledWasm"
+globs = ["**/*.wasm"]
+fallthrough = false
+
+[vars]
+# Default variables, override in Cloudflare Dashboard
+MANAGEMENT_DOMAIN = "localhost:8787"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "mock_api"
+database_id = "773330e9-762a-45ea-a0ac-bb0073792668"
