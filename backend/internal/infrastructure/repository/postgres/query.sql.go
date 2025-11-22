@@ -64,11 +64,16 @@ func (q *Queries) DeleteExpired(ctx context.Context) error {
 
 const deleteMock = `-- name: DeleteMock :exec
 DELETE FROM mocks
-WHERE id = $1
+WHERE id = $1 AND user_id = $2
 `
 
-func (q *Queries) DeleteMock(ctx context.Context, id pgtype.UUID) error {
-	_, err := q.db.Exec(ctx, deleteMock, id)
+type DeleteMockParams struct {
+	ID     pgtype.UUID
+	UserID string
+}
+
+func (q *Queries) DeleteMock(ctx context.Context, arg DeleteMockParams) error {
+	_, err := q.db.Exec(ctx, deleteMock, arg.ID, arg.UserID)
 	return err
 }
 

@@ -107,6 +107,32 @@ func (h *MockHandler) ListMocks(c *gin.Context) {
 	c.JSON(http.StatusOK, mocks)
 }
 
+func (h *MockHandler) DeleteMock(c *gin.Context) {
+	userID := c.GetString("userID")
+	if userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	id := c.Param("id")
+	if id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID is required"})
+		return
+	}
+
+	err := h.service.DeleteMock(userID, id)
+	if err != nil {
+		if err.Error() == "mock endpoint not found" {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Mock not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Mock deleted successfully"})
+}
+
 func (h *MockHandler) ServeMock(c *gin.Context) {
 	userID := c.GetString("userID") // In real scenario, this might be different logic for public access
 	// For now, let's assume the creator is testing it, or we need a way to identify the 'owner' of the mock path

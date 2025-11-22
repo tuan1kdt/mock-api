@@ -101,6 +101,17 @@ func (r *PostgresMockRepository) DeleteExpired() error {
 	return r.queries.DeleteExpired(context.Background())
 }
 
+func (r *PostgresMockRepository) Delete(userID, id string) error {
+	var uuid pgtype.UUID
+	if err := uuid.Scan(id); err != nil {
+		return fmt.Errorf("invalid UUID: %w", err)
+	}
+	return r.queries.DeleteMock(context.Background(), pgrepo.DeleteMockParams{
+		ID:     uuid,
+		UserID: userID,
+	})
+}
+
 func toDomainMock(m pgrepo.Mock) *domain.MockAPI {
 	return &domain.MockAPI{
 		ID:           uuidToString(m.ID),

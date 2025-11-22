@@ -29,7 +29,7 @@ WHERE expires_at < NOW();
 
 -- name: DeleteMock :exec
 DELETE FROM mocks
-WHERE id = $1;
+WHERE id = $1 AND user_id = $2;
 
 -- name: UpdateMock :one
 UPDATE mocks

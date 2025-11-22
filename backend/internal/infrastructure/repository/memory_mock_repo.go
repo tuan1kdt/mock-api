@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"fmt"
 	"sync"
 	"time"
 
@@ -70,5 +71,23 @@ func (r *InMemoryMockRepository) DeleteExpired() error {
 			delete(r.mocks, id)
 		}
 	}
+	return nil
+}
+
+func (r *InMemoryMockRepository) Delete(userID, id string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	mock, exists := r.mocks[id]
+	if !exists {
+		return nil // Already deleted or doesn't exist
+	}
+
+	// Verify ownership
+	if mock.UserID != userID {
+		return fmt.Errorf("mock not found or access denied")
+	}
+
+	delete(r.mocks, id)
 	return nil
 }

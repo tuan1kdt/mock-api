@@ -124,3 +124,25 @@ func (s *MockService) GetMockForServing(userID, path, method string) (*domain.Mo
 func (s *MockService) CleanupExpired() error {
 	return s.repo.DeleteExpired()
 }
+
+func (s *MockService) DeleteMock(userID, id string) error {
+	// Verify ownership by checking if the mock exists and belongs to the user
+	mocks, err := s.repo.GetByUser(userID)
+	if err != nil {
+		return err
+	}
+
+	var found bool
+	for _, m := range mocks {
+		if m.ID == id {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		return domain.ErrMockNotFound
+	}
+
+	return s.repo.Delete(userID, id)
+}

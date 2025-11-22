@@ -105,6 +105,34 @@ export default function CreatePage() {
         navigator.clipboard.writeText(curlCommand);
     };
 
+    const handleDelete = async (mock: MockEndpoint) => {
+        if (!confirm(`Are you sure you want to delete this mock API?\n\n${mock.method} ${mock.path}`)) {
+            return;
+        }
+
+        // Optimistically remove from UI immediately
+        setMocks(prevMocks => prevMocks.filter(m => m.id !== mock.id));
+
+        try {
+            const res = await fetch(`/api/mocks/${mock.id}`, {
+                method: 'DELETE',
+            });
+
+            if (!res.ok) {
+                // If deletion failed, restore the item and show error
+                fetchMocks(); // Refresh to restore correct state
+                const error = await res.json().catch(() => ({}));
+                alert(error.error || 'Failed to delete mock');
+            }
+            // If successful, the optimistic update already removed it from UI
+        } catch (error) {
+            // If error occurred, restore the item
+            fetchMocks(); // Refresh to restore correct state
+            console.error('Failed to delete mock', error);
+            alert('Failed to delete mock');
+        }
+    };
+
     return (
         <div className="min-h-screen bg-background relative overflow-hidden">
             {/* Colorful Background Accents */}
@@ -201,6 +229,13 @@ export default function CreatePage() {
                                                     title="Copy cURL"
                                                 >
                                                     <Copy className="h-3.5 w-3.5" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDelete(mock)}
+                                                    className="p-1.5 rounded-md hover:bg-red-500/20 text-muted-foreground hover:text-red-400 transition-colors"
+                                                    title="Delete"
+                                                >
+                                                    <Trash2 className="h-3.5 w-3.5" />
                                                 </button>
                                             </div>
                                         </div>

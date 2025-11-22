@@ -7,4 +7,5 @@ type MockRepository interface {
 	Update(mock *MockAPI) error
 	IncrementHitCount(id string) error
 	DeleteExpired() error
+	Delete(userID, id string) error
 }
