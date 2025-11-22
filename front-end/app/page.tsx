@@ -60,7 +60,7 @@ export default function Home() {
               <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 transition-opacity group-hover:opacity-100" />
             </Link>
             <Link
-              href="https://github.com"
+              href="https://github.com/tuan1kdt/mock-api"
               target="_blank"
               className="inline-flex h-14 items-center justify-center rounded-full border border-white/10 bg-white/5 backdrop-blur-sm px-8 text-base font-medium text-foreground shadow-sm transition-all hover:bg-white/10 hover:text-white hover:border-white/20 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
             >
