@@ -31,6 +31,10 @@ func (r *D1MockRepository) Save(mock *domain.MockAPI) error {
 		INSERT INTO mocks (id, user_id, method, path, response_status, response_body, created_at, expires_at, hit_count)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`
+	// Convert time.Time to RFC3339 string format for D1 compatibility
+	createdAtStr := mock.CreatedAt.Format(time.RFC3339)
+	expiresAtStr := mock.ExpiresAt.Format(time.RFC3339)
+	
 	_, err := r.db.ExecContext(context.Background(), query,
 		mock.ID,
 		mock.UserID,
@@ -38,8 +42,8 @@ func (r *D1MockRepository) Save(mock *domain.MockAPI) error {
 		mock.Path,
 		mock.Status,
 		mock.ResponseBody,
-		mock.CreatedAt,
-		mock.ExpiresAt,
+		createdAtStr,
+		expiresAtStr,
 		mock.HitCount,
 	)
 	return err
@@ -78,7 +82,7 @@ func (r *D1MockRepository) GetByUser(userID string) ([]*domain.MockAPI, error) {
 	var mocks []*domain.MockAPI
 	for rows.Next() {
 		var m domain.MockAPI
-		var createdAt, expiresAt time.Time
+		var createdAtStr, expiresAtStr string
 		if err := rows.Scan(
 			&m.ID,
 			&m.UserID,
@@ -86,11 +90,20 @@ func (r *D1MockRepository) GetByUser(userID string) ([]*domain.MockAPI, error) {
 			&m.Path,
 			&m.Status,
 			&m.ResponseBody,
-			&createdAt,
-			&expiresAt,
+			&createdAtStr,
+			&expiresAtStr,
 			&m.HitCount,
 		); err != nil {
 			return nil, err
+		}
+		// Parse RFC3339 strings back to time.Time
+		createdAt, err := time.Parse(time.RFC3339, createdAtStr)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse created_at: %w", err)
+		}
+		expiresAt, err := time.Parse(time.RFC3339, expiresAtStr)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse expires_at: %w", err)
 		}
 		m.CreatedAt = createdAt
 		m.ExpiresAt = expiresAt
@@ -108,7 +121,7 @@ func (r *D1MockRepository) GetByPathAndMethod(userID, path, method string) (*dom
 	row := r.db.QueryRowContext(context.Background(), query, userID, path, method)
 
 	var m domain.MockAPI
-	var createdAt, expiresAt time.Time
+	var createdAtStr, expiresAtStr string
 	if err := row.Scan(
 		&m.ID,
 		&m.UserID,
@@ -116,14 +129,23 @@ func (r *D1MockRepository) GetByPathAndMethod(userID, path, method string) (*dom
 		&m.Path,
 		&m.Status,
 		&m.ResponseBody,
-		&createdAt,
-		&expiresAt,
+		&createdAtStr,
+		&expiresAtStr,
 		&m.HitCount,
 	); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
 		return nil, err
+	}
+	// Parse RFC3339 strings back to time.Time
+	createdAt, err := time.Parse(time.RFC3339, createdAtStr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse created_at: %w", err)
+	}
+	expiresAt, err := time.Parse(time.RFC3339, expiresAtStr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse expires_at: %w", err)
 	}
 	m.CreatedAt = createdAt
 	m.ExpiresAt = expiresAt
@@ -138,7 +160,9 @@ func (r *D1MockRepository) IncrementHitCount(id string) error {
 
 func (r *D1MockRepository) DeleteExpired() error {
 	query := `DELETE FROM mocks WHERE expires_at < ?`
-	_, err := r.db.ExecContext(context.Background(), query, time.Now())
+	// Convert time.Time to RFC3339 string format for D1 compatibility
+	nowStr := time.Now().Format(time.RFC3339)
+	_, err := r.db.ExecContext(context.Background(), query, nowStr)
 	return err
 }
 

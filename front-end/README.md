@@ -2,6 +2,27 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+### Environment Variables
+
+The front-end requires a `BACKEND_URL` environment variable to connect to the backend API.
+
+1. Copy the example environment file:
+   ```bash
+   cp .env.example .env.local
+   ```
+
+2. Update `.env.local` with your backend URL:
+   ```
+   BACKEND_URL=https://mock-api-backend.leanhtuan1998hl.workers.dev
+   ```
+
+   For local development, you can use:
+   ```
+   BACKEND_URL=http://localhost:8080
+   ```
+
+### Running the Development Server
+
 First, run the development server:
 
 ```bash

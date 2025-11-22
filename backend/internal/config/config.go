@@ -11,19 +11,14 @@ type DatabaseConfig struct {
 }
 
 type Config struct {
-	ManagementPort string
-	ServingPort    string
-	Database       DatabaseConfig
+	Port     string
+	Database DatabaseConfig
 }
 
 func NewConfig() *Config {
-	mgmtPort := os.Getenv("MANAGEMENT_PORT")
-	if mgmtPort == "" {
-		mgmtPort = "8080"
-	}
-	servingPort := os.Getenv("SERVING_PORT")
-	if servingPort == "" {
-		servingPort = "8000"
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
 	}
 
 	dbHost := os.Getenv("DB_HOST")
@@ -45,8 +40,7 @@ func NewConfig() *Config {
 	}
 
 	return &Config{
-		ManagementPort: mgmtPort,
-		ServingPort:    servingPort,
+		Port: port,
 		Database: DatabaseConfig{
 			Host:     dbHost,
 			Port:     dbPort,
