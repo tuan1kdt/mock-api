@@ -1,6 +1,9 @@
 package config
 
-import "os"
+import (
+	"os"
+	"strings"
+)
 
 type DatabaseConfig struct {
 	Host     string
@@ -14,6 +17,7 @@ type Config struct {
 	Port             string
 	Scheme           string
 	ManagementDomain string
+	AllowedOrigins   []string
 	Database         DatabaseConfig
 }
 
@@ -31,6 +35,11 @@ func NewConfig() *Config {
 	managementDomain := os.Getenv("MANAGEMENT_DOMAIN")
 	if managementDomain == "" {
 		managementDomain = "localhost:8787"
+	}
+
+	allowedOrigins := []string{"*"}
+	if envOrigins := os.Getenv("ALLOWED_ORIGINS"); envOrigins != "" {
+		allowedOrigins = splitAndTrim(envOrigins)
 	}
 
 	dbHost := os.Getenv("DB_HOST")
@@ -55,6 +64,7 @@ func NewConfig() *Config {
 		Port:             port,
 		Scheme:           scheme,
 		ManagementDomain: managementDomain,
+		AllowedOrigins:   allowedOrigins,
 		Database: DatabaseConfig{
 			Host:     dbHost,
 			Port:     dbPort,
@@ -63,4 +73,15 @@ func NewConfig() *Config {
 			DBName:   dbName,
 		},
 	}
+}
+
+func splitAndTrim(raw string) []string {
+	parts := strings.Split(raw, ",")
+	out := make([]string, 0, len(parts))
+	for _, p := range parts {
+		if trimmed := strings.TrimSpace(p); trimmed != "" {
+			out = append(out, trimmed)
+		}
+	}
+	return out
 }

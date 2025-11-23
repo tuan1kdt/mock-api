@@ -46,8 +46,8 @@ func main() {
 	handler := mockhttp.NewMockHandler(service, cfg.Scheme, cfg.ManagementDomain)
 
 	// Create routers
-	managementRouter := mockhttp.NewManagementRouter(handler)
-	servingRouter := mockhttp.NewServingRouter(handler)
+	managementRouter := mockhttp.NewManagementRouter(handler, cfg.AllowedOrigins)
+	servingRouter := mockhttp.NewServingRouter(handler, cfg.AllowedOrigins)
 
 	// Create main handler that dispatches based on Host header
 	mainHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

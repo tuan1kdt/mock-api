@@ -2,10 +2,37 @@ package http
 
 import (
 	"net/http"
+	"slices"
 	"strings"
 )
 
-func NewManagementRouter(handler *MockHandler) http.Handler {
+func corsMiddleware(allowedOrigins []string) func(http.Handler) http.Handler {
+	allowAll := slices.Contains(allowedOrigins, "*")
+
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			origin := r.Header.Get("Origin")
+			if origin != "" {
+				if allowAll || slices.Contains(allowedOrigins, origin) {
+					w.Header().Set("Access-Control-Allow-Origin", origin)
+					w.Header().Set("Access-Control-Allow-Credentials", "true")
+					w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+					w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,PATCH,OPTIONS")
+					w.Header().Set("Vary", "Origin")
+				}
+			}
+
+			if r.Method == http.MethodOptions {
+				w.WriteHeader(http.StatusNoContent)
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+func NewManagementRouter(handler *MockHandler, allowedOrigins []string) http.Handler {
 	mux := http.NewServeMux()
 
 	api := authMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -26,11 +53,11 @@ func NewManagementRouter(handler *MockHandler) http.Handler {
 	}))
 
 	mux.Handle("/api/", api)
-	return mux
+	return corsMiddleware(allowedOrigins)(mux)
 }
 
-func NewServingRouter(handler *MockHandler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func NewServingRouter(handler *MockHandler, allowedOrigins []string) http.Handler {
+	return corsMiddleware(allowedOrigins)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		handler.ServeMock(w, r)
-	})
+	}))
 }
