@@ -2,12 +2,6 @@ name = "mock-api-backend"
 main = "backend/build/worker.mjs"
 compatibility_date = "2025-11-22"
 
-# Explicitly set format to service-worker to avoid bundling issues
-# format = "service-worker" 
-# Wait, 'format' key is deprecated or moved? 
-# In newer wrangler, it might be inferred. 
-# Let's try to just use the file.
-
 [build]
 command = "npm run build"
 watch_dir = ["backend/cmd", "backend/internal"]
@@ -20,9 +14,8 @@ fallthrough = false
 [vars]
 # Production environment variables
 # For local development, use .dev.vars file (gitignored)
-# These are production defaults - override in Cloudflare Dashboard if needed
-# MANAGEMENT_DOMAIN = "your-production-domain.com"
-# SCHEME = "https"
+MANAGEMENT_DOMAIN = "mock-api-backend.leanhtuan1998hl.workers.dev"
+SCHEME = "https"
 
 [[d1_databases]]
 binding = "DB"

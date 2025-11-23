@@ -1,18 +1,18 @@
 name = "mock-api-frontend"
+main = ".open-next/worker.js"
 compatibility_date = "2025-11-22"
+compatibility_flags = ["nodejs_compat"]
 
 # Cloudflare Pages configuration
-pages_build_output_dir = ".vercel/output/static"
+# pages_build_output_dir = ".vercel/output/static"
 
-# Custom domains are configured via Cloudflare Dashboard, not in this file.
-# To set a custom domain:
-# 1. Go to Cloudflare Dashboard > Workers & Pages > Your Project > Custom domains
-# 2. Click "Set up a custom domain" and enter your domain
-# 3. Follow the DNS setup instructions
+[assets]
+directory = ".open-next/assets"
+binding = "ASSETS"
 
 [vars]
 # Production environment variables
 # For local development, use .dev.vars file (gitignored)
 # These are production defaults - override in Cloudflare Dashboard if needed
-BACKEND_URL = "https://mock-api-backend.your-subdomain.workers.dev"
+BACKEND_URL = "https://mock-api-backend.leanhtuan1998hl.workers.dev"
 
