@@ -15,4 +15,3 @@ binding = "ASSETS"
 # For local development, use .dev.vars file (gitignored)
 # These are production defaults - override in Cloudflare Dashboard if needed
 BACKEND_URL = "https://mock-api-backend.leanhtuan1998hl.workers.dev"
-
