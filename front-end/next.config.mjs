@@ -1,7 +1,5 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
-  reactCompiler: true,
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   // Cloudflare Pages compatibility with @opennextjs/cloudflare
   images: {
     unoptimized: true,

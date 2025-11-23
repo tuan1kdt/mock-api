@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8080';
 
-export const runtime = 'edge';
+
 
 export async function PUT(
     request: Request,

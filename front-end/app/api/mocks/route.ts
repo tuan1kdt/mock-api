@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8080';
 
-export const runtime = 'edge';
+
 
 export async function GET() {
     try {
@@ -91,7 +91,7 @@ export async function POST(request: Request) {
         // Check content type before parsing
         const contentType = res.headers.get('content-type');
         const responseText = await res.text();
-        
+
         console.log('Backend response:', {
             status: res.status,
             statusText: res.statusText,

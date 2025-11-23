@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8000';
 
-export const runtime = 'edge';
+
 
 async function handleRequest(request: Request, { params }: { params: Promise<{ mockPath: string[] }> }) {
     const { mockPath } = await params;
