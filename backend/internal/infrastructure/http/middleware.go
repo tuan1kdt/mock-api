@@ -58,7 +58,8 @@ func authMiddleware(next http.Handler) http.Handler {
 				Path:     "/",
 				MaxAge:   0,
 				HttpOnly: true,
-				SameSite: http.SameSiteLaxMode,
+				SameSite: http.SameSiteNoneMode,
+				Secure:   true,
 			})
 		}
 		ctx := context.WithValue(r.Context(), userIDKey, userID)
