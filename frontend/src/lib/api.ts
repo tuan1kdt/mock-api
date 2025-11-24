@@ -1,4 +1,4 @@
-const DEFAULT_BACKEND_URL = "https://mock-api-backend.leanhtuan1998hl.workers.dev";
+const DEFAULT_BACKEND_URL = "https://tuanla.cloud";
 
 const backendBaseUrl = (() => {
     const envUrl = import.meta.env.VITE_BACKEND_URL as string | undefined;

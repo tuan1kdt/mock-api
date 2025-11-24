@@ -11,10 +11,14 @@ type = "CompiledWasm"
 globs = ["**/*.wasm"]
 fallthrough = false
 
+[[routes]]
+pattern   = "*.tuanla.cloud/*"
+zone_name = "tuanla.vn"
+
 [vars]
 # Production environment variables
 # For local development, use .dev.vars file (gitignored)
-MANAGEMENT_DOMAIN = "mock-api-backend.leanhtuan1998hl.workers.dev"
+MANAGEMENT_DOMAIN = "tuanla.cloud"
 SCHEME = "https"
 
 [[d1_databases]]

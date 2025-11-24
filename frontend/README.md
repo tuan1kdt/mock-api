@@ -1,6 +1,6 @@
 # Mock API Frontend (React + Vite)
 
-Static SPA for managing mock APIs against the backend at `https://mock-api-backend.leanhtuan1998hl.workers.dev`. No server-side rendering is used; everything runs in the browser.
+Static SPA for managing mock APIs against the backend at `https://tuanla.cloud`. No server-side rendering is used; everything runs in the browser.
 
 ## Setup
 1. `cd frontend-react`
@@ -16,7 +16,7 @@ Static SPA for managing mock APIs against the backend at `https://mock-api-backe
 ## Cloudflare Pages Deployment
 - Build command: `npm run build`
 - Output directory: `dist`
-- Environment variable: `VITE_BACKEND_URL=https://mock-api-backend.leanhtuan1998hl.workers.dev` (or your custom domain).
+- Environment variable: `VITE_BACKEND_URL=https://tuanla.cloud` (or your custom domain).
 - SPA routing: handled via `public/_redirects` (`/* /index.html 200`).
 - Cookies: the backend uses a `user_id` cookie to keep your mock list. Keep frontend and backend on the same apex domain if possible and allow credentials/CORS for the backend origin.
 
