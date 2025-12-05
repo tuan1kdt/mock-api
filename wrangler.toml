@@ -13,7 +13,11 @@ fallthrough = false
 
 [[routes]]
 pattern   = "*.tuanla.cloud/*"
-zone_name = "tuanla.vn"
+zone_name = "tuanla.cloud"
+
+[[routes]]
+pattern = "tuanla.cloud"
+custom_domain = true
 
 [vars]
 # Production environment variables

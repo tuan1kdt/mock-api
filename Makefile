@@ -12,3 +12,7 @@ dev-worker: build-worker
 run-server:
 	cd backend && go run ./cmd/server
 
+deploy-frontend:
+	cd frontend && npm run deploy
+
+

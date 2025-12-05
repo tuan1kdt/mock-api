@@ -22,7 +22,7 @@ export function CreateApiModal({ isOpen, onClose, onSuccess, editingMock }: Crea
         path: "/my-endpoint",
         method: "GET",
         status: 200,
-        response_body: JSON.stringify({ message: "Hello World" }, null, 2),
+        response_body: "Hello World",
     });
 
     useEffect(() => {
@@ -39,7 +39,7 @@ export function CreateApiModal({ isOpen, onClose, onSuccess, editingMock }: Crea
                 path: "/my-endpoint",
                 method: "GET",
                 status: 200,
-                response_body: JSON.stringify({ message: "Hello World" }, null, 2),
+                response_body: "Hello World",
             });
         }
         setError("");
@@ -53,12 +53,7 @@ export function CreateApiModal({ isOpen, onClose, onSuccess, editingMock }: Crea
         setSuccess("");
 
         try {
-            // Validate JSON
-            try {
-                JSON.parse(formData.response_body);
-            } catch (err) {
-                throw new Error("Invalid JSON in response body");
-            }
+
 
             const url = editingMock ? `/api/mocks/${editingMock.id}` : "/api/mocks";
             const method = editingMock ? "PUT" : "POST";
@@ -148,7 +143,7 @@ export function CreateApiModal({ isOpen, onClose, onSuccess, editingMock }: Crea
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium leading-none">Response Body (JSON)</label>
+                        <label className="text-sm font-medium leading-none">Response Body</label>
                         <textarea
                             value={formData.response_body}
                             onChange={(e) => setFormData({ ...formData, response_body: e.target.value })}
