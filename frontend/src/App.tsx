@@ -6,14 +6,16 @@ import CreatePage from "@/pages/Create";
 
 function App() {
   return (
-    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
       <Router>
         <div className="min-h-screen bg-background font-sans antialiased">
           <Header />
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/create" element={<CreatePage />} />
-          </Routes>
+          <div className="pt-[5.5rem] md:pt-24">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/create" element={<CreatePage />} />
+            </Routes>
+          </div>
         </div>
       </Router>
     </ThemeProvider>

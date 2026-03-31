@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "eslint .",
+    "lint": "eslint src vite.config.ts --max-warnings 0",
     "preview": "npm run build && vite preview",
     "deploy": "npm run build && wrangler pages deploy"
   },
